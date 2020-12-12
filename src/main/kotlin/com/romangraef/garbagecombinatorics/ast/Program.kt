@@ -22,6 +22,10 @@ data class FunctionExpr(val name: String, val args: List<Expr>) : Expr()
 data class VariableExpr(val name: String) : Expr()
 data class BinaryExpr(val left: Expr, val op: BinOp, val right: Expr) : Expr()
 data class Assignment(val name: String, val value: Expr) : NonFuncStatement()
+sealed class TypeExpression
+data class FunctionTypeExpression(val args: List<TypeExpression>, val returnType: TypeExpression) : TypeExpression()
+data class NormalTypeExpression(val name: String) : TypeExpression()
+data class TypeStatement(val name: String, val type: TypeExpression) : NonFuncStatement()
 data class ExprStatement(val expr: Expr) : NonFuncStatement()
 data class FunctionDeclaration(
 	val name: String,

@@ -11,6 +11,7 @@ import com.romangraef.garbagecombinatorics.ast.FunctionDeclaration
 import com.romangraef.garbagecombinatorics.ast.FunctionExpr
 import com.romangraef.garbagecombinatorics.ast.Program
 import com.romangraef.garbagecombinatorics.ast.Statement
+import com.romangraef.garbagecombinatorics.ast.TypeStatement
 import com.romangraef.garbagecombinatorics.ast.UnaryMinus
 import com.romangraef.garbagecombinatorics.ast.VariableExpr
 
@@ -25,6 +26,7 @@ class Executor(val context: Context = Context()) {
 			is Assignment -> context[statement.name] = evaluate(statement.value)
 			is ExprStatement -> evaluate(statement.expr)
 			is FunctionDeclaration -> context.saveFunction(statement)
+			is TypeStatement -> println("Declaring type ${statement.name}: ${statement.type}")
 		}
 	}
 

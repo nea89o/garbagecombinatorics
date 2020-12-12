@@ -19,15 +19,20 @@ import com.romangraef.garbagecombinatorics.ast.ConstInt
 import com.romangraef.garbagecombinatorics.ast.ConstString
 import com.romangraef.garbagecombinatorics.ast.Expr
 import com.romangraef.garbagecombinatorics.ast.ExprStatement
+import com.romangraef.garbagecombinatorics.ast.FunctionTypeExpression
 import com.romangraef.garbagecombinatorics.ast.FunctionDeclaration
 import com.romangraef.garbagecombinatorics.ast.FunctionExpr
+import com.romangraef.garbagecombinatorics.ast.NormalTypeExpression
 import com.romangraef.garbagecombinatorics.ast.Program
 import com.romangraef.garbagecombinatorics.ast.Statement
+import com.romangraef.garbagecombinatorics.ast.TypeExpression
+import com.romangraef.garbagecombinatorics.ast.TypeStatement
 import com.romangraef.garbagecombinatorics.ast.UnaryMinus
 import com.romangraef.garbagecombinatorics.ast.VariableExpr
 
 object GarbageGrammar : Grammar<Program>() {
 	private val LPAR by literalToken("(")
+	private val RIGHTARROW by literalToken("->")
 	private val RPAR by literalToken(")")
 	private val LBR by literalToken("{")
 	private val RBR by literalToken("}")
@@ -37,6 +42,7 @@ object GarbageGrammar : Grammar<Program>() {
 	private val SLASH by literalToken("/")
 	private val EQUALS by literalToken("=")
 	private val COMMA by literalToken(",")
+	private val COLON by literalToken(":")
 	private val NUMBER by regexToken("\\d+")
 	private val STRINGLITERAL by regexToken(
 		"\"((?:.*?[^\\\\])?(?:\\\\\\\\)*)?\"".toRegex(setOf(RegexOption.COMMENTS, RegexOption.DOT_MATCHES_ALL))
@@ -97,11 +103,25 @@ object GarbageGrammar : Grammar<Program>() {
 
 	private val expr: Parser<Expr> by additionTerm
 
+	private val functionType by -LPAR * separatedTerms(
+		parser(::typeExpr),
+		COMMA,
+		acceptZero = true
+	) * -RPAR * -RIGHTARROW * parser(::typeExpr) map { (args, ret) ->
+		FunctionTypeExpression(args, ret)
+	}
+
+	private val normalType by BAREWORD map { NormalTypeExpression(it.text) }
+
+	private val typeExpr: Parser<TypeExpression> by functionType or normalType
+
+	private val typeStatement by BAREWORD * -COLON * typeExpr map { (name, type) -> TypeStatement(name.text, type) }
+
 	private val assignment by BAREWORD * -EQUALS * expr map { (name, value) -> Assignment(name.text, value) }
 
 	private val functionStatement by functionInvoc map { ExprStatement(it) }
 
-	private val nonFuncStatement by assignment or functionStatement
+	private val nonFuncStatement by assignment or functionStatement or typeStatement
 
 	private val functionDeclaration: Parser<Statement> by BAREWORD * -LPAR * separatedTerms(
 		BAREWORD,
